@@ -8,7 +8,7 @@ import java.util.Random;
 
 public class Perceptron extends SupervisedLearner {
 
-	final static double learningRate = 0.5;
+	final static double learningRate = 0.1;
 	final static double improvementThreshold = 0.005;
 	double[][] weights;
 	Random random;
