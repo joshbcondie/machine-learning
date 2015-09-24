@@ -44,6 +44,8 @@ public class Perceptron extends SupervisedLearner {
 					for (int k = 0; k < features.cols(); k++)
 						weights[j][k] += (labels.get(i, j) - guessedLabels[j])
 								* learningRate * features.get(i, k);
+					weights[j][weights[j].length - 1] += (labels.get(i, j) - guessedLabels[j])
+							* learningRate;
 				}
 			}
 			epochAccuracies.add((features.rows() - wrongGuesses)
@@ -62,7 +64,7 @@ public class Perceptron extends SupervisedLearner {
 			double sum = 0;
 			for (int j = 0; j < features.length; j++)
 				sum += features[j] * weights[i][j];
-			sum += weights[i][labels.length - 1];
+			sum += weights[i][weights[i].length - 1];
 			labels[i] = sum > 0 ? 1 : 0;
 		}
 	}
