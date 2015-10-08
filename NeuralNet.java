@@ -70,13 +70,6 @@ public class NeuralNet extends SupervisedLearner {
 							- guessedLabels[j]);
 					deltas[deltas.length - 1][j] = (labels.get(i, j) - unroundedOutputs[j])
 							* unroundedOutputs[j] * (1 - unroundedOutputs[j]);
-					for (int k = 0; k < outputWeights[j].length - 1; k++)
-						outputWeights[j][k] += learningRate
-								* inputs[inputs.length - 1][k]
-								* deltas[deltas.length - 1][j];
-					// update bias
-					outputWeights[j][outputWeights[j].length - 1] += learningRate
-							* deltas[deltas.length - 1][j];
 				}
 
 				for (int j = hiddenLayerCount - 1; j >= 0; j--) {
@@ -97,11 +90,24 @@ public class NeuralNet extends SupervisedLearner {
 
 						deltas[j][k] *= inputs[j + 1][k]
 								* (1 - inputs[j + 1][k]);
+					}
+				}
 
+				for (int j = 0; j < labels.cols(); j++) {
+					for (int k = 0; k < outputWeights[j].length - 1; k++)
+						outputWeights[j][k] += learningRate
+								* inputs[inputs.length - 1][k]
+								* deltas[deltas.length - 1][j];
+					// update bias
+					outputWeights[j][outputWeights[j].length - 1] += learningRate
+							* deltas[deltas.length - 1][j];
+				}
+
+				for (int j = hiddenLayerCount - 1; j >= 0; j--) {
+					for (int k = 0; k < hiddenWeights[j].length; k++) {
 						for (int m = 0; m < hiddenWeights[j][k].length - 1; m++)
 							hiddenWeights[j][k][m] += learningRate
 									* inputs[j + 1][k] * deltas[j][k];
-
 						// update bias
 						hiddenWeights[j][k][hiddenWeights[j][k].length - 1] += learningRate
 								* deltas[j][k];
