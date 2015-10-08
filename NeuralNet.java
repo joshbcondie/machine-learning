@@ -56,27 +56,59 @@ public class NeuralNet extends SupervisedLearner {
 		ArrayList<Double> epochAccuracies = new ArrayList<>();
 
 		do {
-			break;
-			// wrongGuesses = 0;
-			//
-			// features.shuffle(random, labels);
-			//
-			// for (int i = 0; i < features.rows(); i++) {
-			// predict(features.row(i), guessedLabels);
-			// for (int j = 0; j < labels.cols(); j++) {
-			// wrongGuesses += Math.abs(labels.get(i, j)
-			// - guessedLabels[j]);
-			// for (int k = 0; k < features.cols(); k++)
-			// outputWeights[j][k] += (labels.get(i, j) - guessedLabels[j])
-			// * learningRate * features.get(i, k);
-			// outputWeights[j][outputWeights[j].length - 1] += (labels
-			// .get(i, j) - guessedLabels[j]) * learningRate;
-			// }
-			// }
-			// epochAccuracies.add((features.rows() - wrongGuesses)
-			// / features.rows());
-			// System.out.println((features.rows() - wrongGuesses)
-			// / features.rows());
+			wrongGuesses = 0;
+
+//			features.shuffle(random, labels);
+
+			double[][] deltas = new double[hiddenLayerCount + 1][];
+			for (int i = 0; i < features.rows(); i++) {
+				predict(features.row(i), guessedLabels);
+
+				deltas[deltas.length - 1] = new double[outputWeights.length];
+				for (int j = 0; j < labels.cols(); j++) {
+					wrongGuesses += Math.abs(labels.get(i, j)
+							- guessedLabels[j]);
+					deltas[deltas.length - 1][j] = (labels.get(i, j) - unroundedOutputs[j])
+							* unroundedOutputs[j] * (1 - unroundedOutputs[j]);
+					for (int k = 0; k < outputWeights[j].length - 1; k++)
+						outputWeights[j][k] += learningRate
+								* inputs[inputs.length - 1][k]
+								* deltas[deltas.length - 1][j];
+					// update bias
+					outputWeights[j][outputWeights[j].length - 1] += learningRate
+							* deltas[deltas.length - 1][j];
+				}
+
+				for (int j = hiddenLayerCount - 1; j >= 0; j--) {
+					deltas[j] = new double[hiddenWeights[j].length];
+					for (int k = 0; k < hiddenWeights[j].length; k++) {
+
+						deltas[j][k] = 0;
+
+						if (j == hiddenLayerCount - 1) {
+							for (int m = 0; m < outputWeights.length; m++)
+								deltas[j][k] += deltas[j + 1][m]
+										* outputWeights[m][k];
+						} else {
+							for (int m = 0; m < hiddenWeights[j + 1].length; m++)
+								deltas[j][k] += deltas[j + 1][m]
+										* hiddenWeights[j + 1][m][k];
+						}
+
+						for (int m = 0; m < hiddenWeights[j][k].length - 1; m++)
+							hiddenWeights[j][k][m] += learningRate
+									* inputs[j + 1][k] * deltas[j][k];
+
+						// update bias
+						hiddenWeights[j][k][hiddenWeights[j][k].length - 1] += learningRate
+								* deltas[j][k];
+					}
+				}
+			}
+			epochAccuracies.add((features.rows() - wrongGuesses)
+					/ features.rows());
+			System.out.println((features.rows() - wrongGuesses)
+					/ features.rows());
 		} while (epochAccuracies.size() < 6
 				|| epochAccuracies.get(epochAccuracies.size() - 1)
 						- epochAccuracies.get(epochAccuracies.size() - 6) > improvementThreshold);
