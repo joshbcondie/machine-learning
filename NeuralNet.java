@@ -51,6 +51,8 @@ public class NeuralNet extends SupervisedLearner {
 			}
 		}
 
+		printWeights();
+
 		double[] guessedLabels = new double[labels.cols()];
 		double wrongGuesses = Integer.MAX_VALUE;
 		ArrayList<Double> epochAccuracies = new ArrayList<>();
@@ -113,9 +115,15 @@ public class NeuralNet extends SupervisedLearner {
 								* deltas[j][k];
 					}
 				}
+
+				System.out.println("Error values:");
+				for (int a = 0; a < deltas.length; a++)
+					for (int j = 0; j < deltas[a].length; j++)
+						System.out.println(deltas[a][j]);
 			}
 			epochAccuracies.add((features.rows() - wrongGuesses)
 					/ features.rows());
+			printWeights();
 			System.out.println((features.rows() - wrongGuesses)
 					/ features.rows());
 		} while (epochAccuracies.size() < 6
@@ -123,6 +131,27 @@ public class NeuralNet extends SupervisedLearner {
 						- epochAccuracies.get(epochAccuracies.size() - 6) > improvementThreshold);
 
 		System.out.println(epochAccuracies.size() + " epochs");
+	}
+
+	public void printWeights() {
+		System.out.println("Weights:");
+		for (int i = 0; i < hiddenWeights.length; i++) {
+			for (int j = 0; j < hiddenWeights[i].length; j++) {
+				for (int k = 0; k < hiddenWeights[i][j].length; k++)
+					System.out.print(String.format("%30s",
+							hiddenWeights[i][j][k]));
+				System.out.println();
+			}
+			System.out.println();
+		}
+
+		for (int i = 0; i < outputWeights.length; i++) {
+			for (int j = 0; j < outputWeights[i].length; j++)
+				System.out.print(String.format("%30s", outputWeights[i][j]));
+			System.out.println();
+		}
+
+		System.out.println();
 	}
 
 	public void predict(double[] features, double[] labels) throws Exception {
@@ -143,6 +172,7 @@ public class NeuralNet extends SupervisedLearner {
 			}
 		}
 		unroundedOutputs = new double[outputWeights.length];
+		System.out.println("Predicted output:");
 		for (int i = 0; i < labels.length; i++) {
 			double sum = 0;
 			for (int j = 0; j < inputs[inputs.length - 1].length; j++)
@@ -150,6 +180,7 @@ public class NeuralNet extends SupervisedLearner {
 			sum += outputWeights[i][outputWeights[i].length - 1];
 			// labels[i] = sum > 0 ? 1 : 0;
 			unroundedOutputs[i] = 1 / (1 + Math.pow(Math.E, -sum));
+			System.out.println(unroundedOutputs[i]);
 			labels[i] = Math.round(unroundedOutputs[i]);
 		}
 	}
