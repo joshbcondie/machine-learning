@@ -58,7 +58,7 @@ public class NeuralNet extends SupervisedLearner {
 		do {
 			wrongGuesses = 0;
 
-//			features.shuffle(random, labels);
+			features.shuffle(random, labels);
 
 			double[][] deltas = new double[hiddenLayerCount + 1][];
 			for (int i = 0; i < features.rows(); i++) {
@@ -94,6 +94,9 @@ public class NeuralNet extends SupervisedLearner {
 								deltas[j][k] += deltas[j + 1][m]
 										* hiddenWeights[j + 1][m][k];
 						}
+
+						deltas[j][k] *= inputs[j + 1][k]
+								* (1 - inputs[j + 1][k]);
 
 						for (int m = 0; m < hiddenWeights[j][k].length - 1; m++)
 							hiddenWeights[j][k][m] += learningRate
