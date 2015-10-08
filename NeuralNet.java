@@ -109,7 +109,7 @@ public class NeuralNet extends SupervisedLearner {
 					for (int k = 0; k < hiddenWeights[j].length; k++) {
 						for (int m = 0; m < hiddenWeights[j][k].length - 1; m++)
 							hiddenWeights[j][k][m] += learningRate
-									* inputs[j + 1][k] * deltas[j][k];
+									* inputs[j][m] * deltas[j][k];
 						// update bias
 						hiddenWeights[j][k][hiddenWeights[j][k].length - 1] += learningRate
 								* deltas[j][k];
