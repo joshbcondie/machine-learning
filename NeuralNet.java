@@ -14,6 +14,8 @@ public class NeuralNet extends SupervisedLearner {
 	final static double improvementThreshold = 0.005;
 	double[][][] hiddenWeights;
 	double[][] outputWeights;
+	double[][] inputs;
+	double[] unroundedOutputs;
 	Random random;
 
 	public NeuralNet(Random random) {
@@ -84,7 +86,7 @@ public class NeuralNet extends SupervisedLearner {
 
 	public void predict(double[] features, double[] labels) throws Exception {
 
-		double[][] inputs = new double[hiddenLayerCount + 1][];
+		inputs = new double[hiddenLayerCount + 1][];
 		inputs[0] = new double[features.length];
 		for (int i = 0; i < features.length; i++)
 			inputs[0][i] = features[i];
@@ -99,12 +101,15 @@ public class NeuralNet extends SupervisedLearner {
 				inputs[i + 1][j] = 1 / (1 + Math.pow(Math.E, -sum));
 			}
 		}
+		unroundedOutputs = new double[outputWeights.length];
 		for (int i = 0; i < labels.length; i++) {
 			double sum = 0;
 			for (int j = 0; j < inputs[inputs.length - 1].length; j++)
 				sum += inputs[inputs.length - 1][j] * outputWeights[i][j];
 			sum += outputWeights[i][outputWeights[i].length - 1];
-			labels[i] = sum > 0 ? 1 : 0;
+			// labels[i] = sum > 0 ? 1 : 0;
+			unroundedOutputs[i] = 1 / (1 + Math.pow(Math.E, -sum));
+			labels[i] = Math.round(unroundedOutputs[i]);
 		}
 	}
 
