@@ -17,6 +17,7 @@ public class NeuralNet extends SupervisedLearner {
 	double[][] inputs;
 	double[] unroundedOutputs;
 	final static double momentum = 0.9;
+	final static double validationSetSize = 0.25;
 	Random random;
 
 	public NeuralNet(Random random) {
@@ -52,7 +53,6 @@ public class NeuralNet extends SupervisedLearner {
 			}
 		}
 
-
 		double[][] deltas = new double[hiddenLayerCount + 1][];
 		for (int i = 0; i < deltas.length; i++) {
 			if (i == deltas.length - 1)
@@ -79,24 +79,31 @@ public class NeuralNet extends SupervisedLearner {
 			}
 		}
 
-		printWeights();
+		// printWeights();
 
 		double[] guessedLabels = new double[labels.cols()];
 		double wrongGuesses = Integer.MAX_VALUE;
 		ArrayList<Double> epochAccuracies = new ArrayList<>();
+		int validationSetNumber = (int) (validationSetSize * features.rows());
+		Matrix validationFeatures = new Matrix(features, 0, 0,
+				validationSetNumber, features.cols());
+		Matrix trainingFeatures = new Matrix(features, validationSetNumber, 0,
+				features.rows() - validationSetNumber, features.cols());
+		Matrix validationLabels = new Matrix(labels, 0, 0, validationSetNumber,
+				labels.cols());
+		Matrix trainingLabels = new Matrix(labels, validationSetNumber, 0,
+				labels.rows() - validationSetNumber, labels.cols());
 
 		do {
 			wrongGuesses = 0;
 
-			features.shuffle(random, labels);
+			trainingFeatures.shuffle(random, trainingLabels);
 
-			for (int i = 0; i < features.rows(); i++) {
-				predict(features.row(i), guessedLabels);
+			for (int i = 0; i < trainingFeatures.rows(); i++) {
+				predict(trainingFeatures.row(i), guessedLabels);
 
-				for (int j = 0; j < labels.cols(); j++) {
-					wrongGuesses += Math.abs(labels.get(i, j)
-							- guessedLabels[j]);
-					deltas[deltas.length - 1][j] = (labels.get(i, j) - unroundedOutputs[j])
+				for (int j = 0; j < trainingLabels.cols(); j++) {
+					deltas[deltas.length - 1][j] = (trainingLabels.get(i, j) - unroundedOutputs[j])
 							* unroundedOutputs[j] * (1 - unroundedOutputs[j]);
 				}
 
@@ -120,7 +127,7 @@ public class NeuralNet extends SupervisedLearner {
 					}
 				}
 
-				for (int j = 0; j < labels.cols(); j++) {
+				for (int j = 0; j < trainingLabels.cols(); j++) {
 					for (int k = 0; k < outputWeights[j].length - 1; k++) {
 						outputWeights[j][k] += learningRate
 								* inputs[inputs.length - 1][k]
@@ -166,16 +173,26 @@ public class NeuralNet extends SupervisedLearner {
 					}
 				}
 
-				System.out.println("Error values:");
-				for (int a = 0; a < deltas.length; a++)
-					for (int j = 0; j < deltas[a].length; j++)
-						System.out.println(deltas[a][j]);
+				// System.out.println("Error values:");
+				// for (int a = 0; a < deltas.length; a++)
+				// for (int j = 0; j < deltas[a].length; j++)
+				// System.out.println(deltas[a][j]);
 			}
-			epochAccuracies.add((features.rows() - wrongGuesses)
-					/ features.rows());
-			printWeights();
-			System.out.println((features.rows() - wrongGuesses)
-					/ features.rows());
+
+			for (int i = 0; i < validationFeatures.rows(); i++) {
+				predict(validationFeatures.row(i), guessedLabels);
+
+				for (int j = 0; j < validationLabels.cols(); j++) {
+					wrongGuesses += Math.abs(validationLabels.get(i, j)
+							- guessedLabels[j]);
+				}
+			}
+
+			epochAccuracies.add((validationFeatures.rows() - wrongGuesses)
+					/ validationFeatures.rows());
+			// printWeights();
+			System.out.println((validationFeatures.rows() - wrongGuesses)
+					/ validationFeatures.rows());
 		} while (epochAccuracies.size() < 6
 				|| epochAccuracies.get(epochAccuracies.size() - 1)
 						- epochAccuracies.get(epochAccuracies.size() - 6) > improvementThreshold);
@@ -222,7 +239,7 @@ public class NeuralNet extends SupervisedLearner {
 			}
 		}
 		unroundedOutputs = new double[outputWeights.length];
-		System.out.println("Predicted output:");
+		// System.out.println("Predicted output:");
 		for (int i = 0; i < labels.length; i++) {
 			double sum = 0;
 			for (int j = 0; j < inputs[inputs.length - 1].length; j++)
@@ -230,7 +247,7 @@ public class NeuralNet extends SupervisedLearner {
 			sum += outputWeights[i][outputWeights[i].length - 1];
 			// labels[i] = sum > 0 ? 1 : 0;
 			unroundedOutputs[i] = 1 / (1 + Math.pow(Math.E, -sum));
-			System.out.println(unroundedOutputs[i]);
+			// System.out.println(unroundedOutputs[i]);
 			labels[i] = Math.round(unroundedOutputs[i]);
 		}
 	}
