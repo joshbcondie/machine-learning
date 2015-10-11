@@ -14,7 +14,6 @@ public class NeuralNet extends SupervisedLearner {
 	double[][][] hiddenWeights;
 	double[][] outputWeights;
 	double[][] inputs;
-	double[] unroundedOutputs;
 	final static double momentum = 0.9;
 	final static double validationSetSize = 0.25;
 	Random random;
@@ -120,11 +119,11 @@ public class NeuralNet extends SupervisedLearner {
 			trainingFeatures.shuffle(random, trainingLabels);
 
 			for (int i = 0; i < trainingFeatures.rows(); i++) {
-				predict(trainingFeatures.row(i), guessedLabels);
 
+				double[] outputs = getOutputs(trainingFeatures.row(i));
 				for (int j = 0; j < trainingLabels.cols(); j++) {
-					deltas[deltas.length - 1][j] = (trainingLabels.get(i, j) - unroundedOutputs[j])
-							* unroundedOutputs[j] * (1 - unroundedOutputs[j]);
+					deltas[deltas.length - 1][j] = (trainingLabels.get(i, j) - outputs[j])
+							* outputs[j] * (1 - outputs[j]);
 				}
 
 				for (int j = hiddenLayerCount - 1; j >= 0; j--) {
@@ -203,8 +202,8 @@ public class NeuralNet extends SupervisedLearner {
 				predict(validationFeatures.row(i), guessedLabels);
 
 				for (int j = 0; j < validationLabels.cols(); j++) {
-					wrongGuesses += Math.abs(validationLabels.get(i, j)
-							- guessedLabels[j]);
+					if (validationLabels.get(i, j) != guessedLabels[j])
+						wrongGuesses++;
 				}
 			}
 
@@ -257,8 +256,8 @@ public class NeuralNet extends SupervisedLearner {
 		System.out.println();
 	}
 
-	public void predict(double[] features, double[] labels) throws Exception {
-
+	public double[] getOutputs(double[] features) {
+		double[] outputs = new double[outputWeights.length];
 		inputs = new double[hiddenLayerCount + 1][];
 		inputs[0] = new double[features.length];
 		for (int i = 0; i < features.length; i++)
@@ -274,18 +273,25 @@ public class NeuralNet extends SupervisedLearner {
 				inputs[i + 1][j] = 1 / (1 + Math.pow(Math.E, -sum));
 			}
 		}
-		unroundedOutputs = new double[outputWeights.length];
+
 		// System.out.println("Predicted output:");
-		for (int i = 0; i < labels.length; i++) {
+		for (int i = 0; i < outputs.length; i++) {
 			double sum = 0;
 			for (int j = 0; j < inputs[inputs.length - 1].length; j++)
 				sum += inputs[inputs.length - 1][j] * outputWeights[i][j];
 			sum += outputWeights[i][outputWeights[i].length - 1];
-			// labels[i] = sum > 0 ? 1 : 0;
-			unroundedOutputs[i] = 1 / (1 + Math.pow(Math.E, -sum));
-			// System.out.println(unroundedOutputs[i]);
-			labels[i] = Math.round(unroundedOutputs[i]);
+			// outputs[i] = sum > 0 ? 1 : 0;
+			outputs[i] = 1 / (1 + Math.pow(Math.E, -sum));
+			// System.out.println(outputs[i]);
 		}
+
+		return outputs;
 	}
 
+	public void predict(double[] features, double[] labels) throws Exception {
+		double[] outputs = getOutputs(features);
+		for (int i = 0; i < labels.length; i++) {
+			labels[i] = Math.round(outputs[i]);
+		}
+	}
 }
