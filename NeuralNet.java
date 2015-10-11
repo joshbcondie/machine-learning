@@ -16,6 +16,7 @@ public class NeuralNet extends SupervisedLearner {
 	double[][] outputWeights;
 	double[][] inputs;
 	double[] unroundedOutputs;
+	final static double momentum = 0.9;
 	Random random;
 
 	public NeuralNet(Random random) {
@@ -62,6 +63,22 @@ public class NeuralNet extends SupervisedLearner {
 				deltas[i][j] = 0;
 		}
 
+		double[][][] lastWeightChanges = new double[hiddenLayerCount + 1][][];
+		for (int i = 0; i < lastWeightChanges.length; i++) {
+			if (i == lastWeightChanges.length - 1)
+				lastWeightChanges[i] = new double[outputWeights.length][];
+			else
+				lastWeightChanges[i] = new double[hiddenWeights[i].length][];
+			for (int j = 0; j < lastWeightChanges[i].length; j++) {
+				if (i == lastWeightChanges.length - 1)
+					lastWeightChanges[i][j] = new double[outputWeights[j].length];
+				else
+					lastWeightChanges[i][j] = new double[hiddenWeights[i][j].length];
+				for (int k = 0; k < lastWeightChanges[i][j].length; k++)
+					lastWeightChanges[i][j][k] = 0;
+			}
+		}
+
 		printWeights();
 
 		double[] guessedLabels = new double[labels.cols()];
@@ -104,23 +121,48 @@ public class NeuralNet extends SupervisedLearner {
 				}
 
 				for (int j = 0; j < labels.cols(); j++) {
-					for (int k = 0; k < outputWeights[j].length - 1; k++)
+					for (int k = 0; k < outputWeights[j].length - 1; k++) {
 						outputWeights[j][k] += learningRate
 								* inputs[inputs.length - 1][k]
-								* deltas[deltas.length - 1][j];
+								* deltas[deltas.length - 1][j]
+								+ momentum
+								* lastWeightChanges[lastWeightChanges.length - 1][j][k];
+						lastWeightChanges[lastWeightChanges.length - 1][j][k] = learningRate
+								* inputs[inputs.length - 1][k]
+								* deltas[deltas.length - 1][j]
+								+ momentum
+								* lastWeightChanges[lastWeightChanges.length - 1][j][k];
+					}
 					// update bias
 					outputWeights[j][outputWeights[j].length - 1] += learningRate
-							* deltas[deltas.length - 1][j];
+							* deltas[deltas.length - 1][j]
+							+ momentum
+							* lastWeightChanges[lastWeightChanges.length - 1][j][outputWeights[j].length - 1];
+					lastWeightChanges[lastWeightChanges.length - 1][j][outputWeights[j].length - 1] = learningRate
+							* deltas[deltas.length - 1][j]
+							+ momentum
+							* lastWeightChanges[lastWeightChanges.length - 1][j][outputWeights[j].length - 1];
 				}
 
 				for (int j = hiddenLayerCount - 1; j >= 0; j--) {
 					for (int k = 0; k < hiddenWeights[j].length; k++) {
-						for (int m = 0; m < hiddenWeights[j][k].length - 1; m++)
+						for (int m = 0; m < hiddenWeights[j][k].length - 1; m++) {
 							hiddenWeights[j][k][m] += learningRate
-									* inputs[j][m] * deltas[j][k];
+									* inputs[j][m] * deltas[j][k] + momentum
+									* lastWeightChanges[j][k][m];
+							lastWeightChanges[j][k][m] = learningRate
+									* inputs[j][m] * deltas[j][k] + momentum
+									* lastWeightChanges[j][k][m];
+						}
 						// update bias
 						hiddenWeights[j][k][hiddenWeights[j][k].length - 1] += learningRate
-								* deltas[j][k];
+								* deltas[j][k]
+								+ momentum
+								* lastWeightChanges[j][k][hiddenWeights[j][k].length - 1];
+						lastWeightChanges[j][k][hiddenWeights[j][k].length - 1] = learningRate
+								* deltas[j][k]
+								+ momentum
+								* lastWeightChanges[j][k][hiddenWeights[j][k].length - 1];
 					}
 				}
 
