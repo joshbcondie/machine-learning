@@ -53,6 +53,23 @@ public class NeuralNet extends SupervisedLearner {
 			}
 		}
 
+		double[][][] bestHiddenWeights = new double[hiddenWeights.length][][];
+		for (int i = 0; i < bestHiddenWeights.length; i++) {
+			bestHiddenWeights[i] = new double[hiddenWeights[i].length][];
+			for (int j = 0; j < bestHiddenWeights[i].length; j++) {
+				bestHiddenWeights[i][j] = new double[hiddenWeights[i][j].length];
+				for (int k = 0; k < bestHiddenWeights[i][j].length; k++)
+					bestHiddenWeights[i][j][k] = hiddenWeights[i][j][k];
+			}
+		}
+
+		double[][] bestOutputWeights = new double[outputWeights.length][];
+		for (int i = 0; i < bestOutputWeights.length; i++) {
+			bestOutputWeights[i] = new double[outputWeights[i].length];
+			for (int j = 0; j < bestOutputWeights[i].length; j++)
+				bestOutputWeights[i][j] = outputWeights[i][j];
+		}
+
 		double[][] deltas = new double[hiddenLayerCount + 1][];
 		for (int i = 0; i < deltas.length; i++) {
 			if (i == deltas.length - 1)
@@ -93,6 +110,7 @@ public class NeuralNet extends SupervisedLearner {
 				labels.cols());
 		Matrix trainingLabels = new Matrix(labels, validationSetNumber, 0,
 				labels.rows() - validationSetNumber, labels.cols());
+		double bestAccuracy = 0;
 
 		do {
 			wrongGuesses = 0;
@@ -188,14 +206,31 @@ public class NeuralNet extends SupervisedLearner {
 				}
 			}
 
-			epochAccuracies.add((validationFeatures.rows() - wrongGuesses)
-					/ validationFeatures.rows());
+			double accuracy = (validationFeatures.rows() - wrongGuesses)
+					/ validationFeatures.rows();
+
+			if (accuracy > bestAccuracy) {
+				bestAccuracy = accuracy;
+
+				for (int i = 0; i < hiddenWeights.length; i++)
+					for (int j = 0; j < hiddenWeights[i].length; j++)
+						for (int k = 0; k < hiddenWeights[i][j].length; k++)
+							bestHiddenWeights[i][j][k] = hiddenWeights[i][j][k];
+
+				for (int i = 0; i < outputWeights.length; i++)
+					for (int j = 0; j < outputWeights[i].length; j++)
+						bestOutputWeights[i][j] = outputWeights[i][j];
+			}
+
+			epochAccuracies.add(accuracy);
 			// printWeights();
-			System.out.println((validationFeatures.rows() - wrongGuesses)
-					/ validationFeatures.rows());
+			System.out.println(accuracy);
 		} while (epochAccuracies.size() < 6
 				|| epochAccuracies.get(epochAccuracies.size() - 1)
 						- epochAccuracies.get(epochAccuracies.size() - 6) > improvementThreshold);
+
+		hiddenWeights = bestHiddenWeights;
+		outputWeights = bestOutputWeights;
 
 		System.out.println(epochAccuracies.size() + " epochs");
 	}
