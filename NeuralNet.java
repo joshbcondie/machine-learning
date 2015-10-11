@@ -97,6 +97,8 @@ public class NeuralNet extends SupervisedLearner {
 
 		// printWeights();
 
+		features.shuffle(random, labels);
+
 		double[] guessedLabels = new double[labels.cols()];
 		double wrongGuesses = Integer.MAX_VALUE;
 		ArrayList<Double> epochAccuracies = new ArrayList<>();
