@@ -8,6 +8,8 @@ import java.util.Random;
 
 public class NeuralNet extends SupervisedLearner {
 
+	final static int classCount = 3;
+	final static double minAccuracy = 0.85;
 	static int hiddenLayerCount = 2;
 	final static int neuronsPerHiddenLayer = 2;
 	final static double learningRate = 0.1;
@@ -122,7 +124,8 @@ public class NeuralNet extends SupervisedLearner {
 
 				double[] outputs = getOutputs(trainingFeatures.row(i));
 				for (int j = 0; j < trainingLabels.cols(); j++) {
-					deltas[deltas.length - 1][j] = (trainingLabels.get(i, j) - outputs[j])
+					deltas[deltas.length - 1][j] = (trainingLabels.get(i, j)
+							/ (classCount - 1) - outputs[j])
 							* outputs[j] * (1 - outputs[j]);
 				}
 
@@ -227,7 +230,8 @@ public class NeuralNet extends SupervisedLearner {
 			epochAccuracies.add(accuracy);
 			// printWeights();
 			System.out.println(accuracy);
-		} while (epochAccuracies.size() - bestEpoch < 6);
+		} while (epochAccuracies.size() - bestEpoch < 6
+				|| bestAccuracy < minAccuracy);
 
 		hiddenWeights = bestHiddenWeights;
 		outputWeights = bestOutputWeights;
@@ -291,7 +295,7 @@ public class NeuralNet extends SupervisedLearner {
 	public void predict(double[] features, double[] labels) throws Exception {
 		double[] outputs = getOutputs(features);
 		for (int i = 0; i < labels.length; i++) {
-			labels[i] = Math.round(outputs[i]);
+			labels[i] = Math.round((classCount - 1) * outputs[i]);
 		}
 	}
 }
