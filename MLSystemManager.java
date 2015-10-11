@@ -24,12 +24,12 @@ public class MLSystemManager {
 		else throw new Exception("Unrecognized model: " + model);
 	}
 
-	public void run(String[] args) throws Exception {
+	public void run(String[] args, long seed) throws Exception {
 
 		//args = new String[]{"-L", "baseline", "-A", "data/iris.arff", "-E", "cross", "10", "-N"};
 
-		//Random rand = new Random(1234); // Use a seed for deterministic results (makes debugging easier)
-		Random rand = new Random(); // No seed for non-deterministic results
+		Random rand = new Random(seed); // Use a seed for deterministic results (makes debugging easier)
+//		Random rand = new Random(); // No seed for non-deterministic results
 
 		//Parse the command line arguments
 		ArgParser parser = new ArgParser(args);
@@ -281,7 +281,10 @@ public class MLSystemManager {
 
 	public static void main(String[] args) throws Exception
 	{
+		Random random = new Random();
 		MLSystemManager ml = new MLSystemManager();
-		ml.run(args);
+		long seed = random.nextInt();
+		System.out.println("Seed: " + seed);
+		ml.run(args, seed);
 	}
 }
