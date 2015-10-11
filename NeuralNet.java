@@ -11,7 +11,6 @@ public class NeuralNet extends SupervisedLearner {
 	static int hiddenLayerCount = 2;
 	final static int neuronsPerHiddenLayer = 2;
 	final static double learningRate = 0.1;
-	final static double improvementThreshold = 0.005;
 	double[][][] hiddenWeights;
 	double[][] outputWeights;
 	double[][] inputs;
@@ -111,6 +110,7 @@ public class NeuralNet extends SupervisedLearner {
 		Matrix trainingLabels = new Matrix(labels, validationSetNumber, 0,
 				labels.rows() - validationSetNumber, labels.cols());
 		double bestAccuracy = 0;
+		double bestEpoch = 0;
 
 		do {
 			wrongGuesses = 0;
@@ -211,6 +211,7 @@ public class NeuralNet extends SupervisedLearner {
 
 			if (accuracy > bestAccuracy) {
 				bestAccuracy = accuracy;
+				bestEpoch = epochAccuracies.size();
 
 				for (int i = 0; i < hiddenWeights.length; i++)
 					for (int j = 0; j < hiddenWeights[i].length; j++)
@@ -225,9 +226,7 @@ public class NeuralNet extends SupervisedLearner {
 			epochAccuracies.add(accuracy);
 			// printWeights();
 			System.out.println(accuracy);
-		} while (epochAccuracies.size() < 6
-				|| epochAccuracies.get(epochAccuracies.size() - 1)
-						- epochAccuracies.get(epochAccuracies.size() - 6) > improvementThreshold);
+		} while (epochAccuracies.size() - bestEpoch < 6);
 
 		hiddenWeights = bestHiddenWeights;
 		outputWeights = bestOutputWeights;
