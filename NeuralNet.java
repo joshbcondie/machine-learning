@@ -51,6 +51,17 @@ public class NeuralNet extends SupervisedLearner {
 			}
 		}
 
+
+		double[][] deltas = new double[hiddenLayerCount + 1][];
+		for (int i = 0; i < deltas.length; i++) {
+			if (i == deltas.length - 1)
+				deltas[i] = new double[outputWeights.length];
+			else
+				deltas[i] = new double[hiddenWeights[i].length];
+			for (int j = 0; j < deltas[i].length; j++)
+				deltas[i][j] = 0;
+		}
+
 		printWeights();
 
 		double[] guessedLabels = new double[labels.cols()];
@@ -62,11 +73,9 @@ public class NeuralNet extends SupervisedLearner {
 
 			features.shuffle(random, labels);
 
-			double[][] deltas = new double[hiddenLayerCount + 1][];
 			for (int i = 0; i < features.rows(); i++) {
 				predict(features.row(i), guessedLabels);
 
-				deltas[deltas.length - 1] = new double[outputWeights.length];
 				for (int j = 0; j < labels.cols(); j++) {
 					wrongGuesses += Math.abs(labels.get(i, j)
 							- guessedLabels[j]);
@@ -75,7 +84,6 @@ public class NeuralNet extends SupervisedLearner {
 				}
 
 				for (int j = hiddenLayerCount - 1; j >= 0; j--) {
-					deltas[j] = new double[hiddenWeights[j].length];
 					for (int k = 0; k < hiddenWeights[j].length; k++) {
 
 						deltas[j][k] = 0;
