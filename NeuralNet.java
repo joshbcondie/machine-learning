@@ -8,15 +8,16 @@ import java.util.Random;
 
 public class NeuralNet extends SupervisedLearner {
 
-	final static int classCount = 3;
-	final static double minAccuracy = 0.85;
-	static int hiddenLayerCount = 1;
-	final static int neuronsPerHiddenLayer = 8;
-	final static double learningRate = 0.1;
+	final static int epochWindow = 5;
+	final static int classCount = 11;
+	final static double minAccuracy = 0;// 0.85;
+	static int hiddenLayerCount = 4;
+	final static int neuronsPerHiddenLayer = 32;
+	final static double learningRate = 0.3;
 	double[][][] hiddenWeights;
 	double[][] outputWeights;
 	double[][] inputs;
-	final static double momentum = 0.9;
+	final static double momentum = 0.8;
 	final static double validationSetSize = 0.25;
 	Random random;
 
@@ -116,6 +117,7 @@ public class NeuralNet extends SupervisedLearner {
 		Matrix trainingLabels = new Matrix(labels, validationSetNumber, 0,
 				labels.rows() - validationSetNumber, labels.cols());
 		double bestAccuracy = 0;
+		double bestMSE = 0;
 		double bestEpoch = 0;
 
 		do {
@@ -234,9 +236,11 @@ public class NeuralNet extends SupervisedLearner {
 
 			double accuracy = (validationFeatures.rows() - validationWrongGuesses)
 					/ validationFeatures.rows();
+			double mse = validationSSE / validationFeatures.rows();
 
 			if (accuracy > bestAccuracy) {
 				bestAccuracy = accuracy;
+				bestMSE = mse;
 				bestEpoch = epochAccuracies.size();
 
 				for (int i = 0; i < hiddenWeights.length; i++)
@@ -251,16 +255,17 @@ public class NeuralNet extends SupervisedLearner {
 
 			epochAccuracies.add(accuracy);
 			// printWeights();
-			System.out.println("Training accuracy: "
-					+ (trainingFeatures.rows() - trainingWrongGuesses)
-					/ trainingFeatures.rows());
-			System.out.println("Validation accuracy: " + accuracy);
-			System.out.println(trainingSSE / trainingFeatures.rows());
-			System.out.println(validationSSE
-					/ validationFeatures.rows());
-		} while (epochAccuracies.size() - bestEpoch < 6
+//			 System.out.println((trainingFeatures.rows() -
+//			 trainingWrongGuesses)
+//			 / trainingFeatures.rows());
+//			 System.out.println(accuracy);
+//			 System.out.println(trainingSSE / trainingFeatures.rows());
+//			System.out.println(validationSSE / validationFeatures.rows());
+		} while (epochAccuracies.size() - bestEpoch < (epochWindow + 1)
 				|| bestAccuracy < minAccuracy);
 
+		System.out.println(bestAccuracy);
+		System.out.println(bestMSE);
 		hiddenWeights = bestHiddenWeights;
 		outputWeights = bestOutputWeights;
 
