@@ -40,26 +40,24 @@ public class DecisionTree extends SupervisedLearner {
 		}
 		if (isPure)
 			category = (int) labels.get(0)[0];
-		else {
+		else if (features.get(0).length == skipArray.length) {
+			double[] histo = new double[labelValueCounts[0]];
+			for (int i = 0; i < labels.size(); i++) {
+				histo[(int) labels.get(i)[0]]++;
+			}
+			double max = 0;
+			int maxIndex = -1;
+			for (int i = 0; i < histo.length; i++) {
+				if (histo[i] > max) {
+					max = histo[i];
+					maxIndex = i;
+				}
+			}
+			category = maxIndex;
+		} else {
 			chooseFeature();
 			for (int i = 0; i < featureValueCounts[featureIndex]; i++) {
 				addChild(i);
-			}
-
-			if (children.isEmpty()) {
-				double[] histo = new double[labelValueCounts[0]];
-				for (int i = 0; i < labels.size(); i++) {
-					histo[(int) labels.get(i)[0]]++;
-				}
-				double max = 0;
-				int maxIndex = -1;
-				for (int i = 0; i < histo.length; i++) {
-					if (histo[i] > max) {
-						max = histo[i];
-						maxIndex = i;
-					}
-				}
-				category = maxIndex;
 			}
 
 			for (Integer i : children.keySet()) {
