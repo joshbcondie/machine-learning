@@ -153,22 +153,32 @@ public class DecisionTree extends SupervisedLearner {
 		return logSum;
 	}
 
-	@Override
 	public String toString() {
+		return toString(0);
+	}
+
+	public String toString(int level) {
 		StringBuilder sb = new StringBuilder();
-		sb.append("featureIndex=" + featureIndex);
-		sb.append("\nfeatures=" + Arrays.deepToString(features.toArray()));
-		sb.append("\nlabels=" + Arrays.deepToString(labels.toArray()));
-		sb.append("\nfeatureValueCounts=" + Arrays.toString(featureValueCounts));
-		sb.append("\nlabelValueCounts=" + Arrays.toString(labelValueCounts));
-		sb.append("\nskipArray=" + Arrays.toString(skipArray));
-		sb.append("\ncategory=" + category + "]");
+		String tabs = "";
+		for (int i = 0; i < level; i++)
+			tabs = tabs + "\t";
+		sb.append(tabs + "featureIndex=" + featureIndex);
+		sb.append("\n" + tabs + "features="
+				+ Arrays.deepToString(features.toArray()));
+		sb.append("\n" + tabs + "labels="
+				+ Arrays.deepToString(labels.toArray()));
+		sb.append("\n" + tabs + "featureValueCounts="
+				+ Arrays.toString(featureValueCounts));
+		sb.append("\n" + tabs + "labelValueCounts="
+				+ Arrays.toString(labelValueCounts));
+		sb.append("\n" + tabs + "skipArray=" + Arrays.toString(skipArray));
+		sb.append("\n" + tabs + "category=" + category);
 
 		for (int i : children.keySet()) {
-			sb.append("\n{\n");
-			sb.append("Child (value " + i + "):\n");
-			sb.append(children.get(i).toString());
-			sb.append("\n}\n");
+			sb.append("\n" + tabs + "{\n");
+			sb.append(tabs + "\tChild (value " + i + "):\n");
+			sb.append(children.get(i).toString(level + 1));
+			sb.append("\n" + tabs + "}");
 		}
 
 		return sb.toString();
