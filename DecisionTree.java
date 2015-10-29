@@ -187,6 +187,28 @@ public class DecisionTree extends SupervisedLearner {
 		return logSum;
 	}
 
+	public int getNodeCount() {
+		int count = 1;
+		for (int i : children.keySet())
+			count += children.get(i).getNodeCount();
+		return count;
+	}
+
+	public int getDepth() {
+		return getDepth(1);
+	}
+
+	public int getDepth(int level) {
+		int maxDepth = level;
+		for (int i : children.keySet()) {
+			int childDepth = children.get(i).getDepth(level + 1);
+			if (childDepth > maxDepth)
+				maxDepth = childDepth;
+		}
+
+		return maxDepth;
+	}
+
 	public String toString() {
 		return toString(0);
 	}
