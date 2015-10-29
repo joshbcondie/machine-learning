@@ -9,26 +9,22 @@ public class DecisionTree extends SupervisedLearner {
 	private DecisionTree parent;
 	private Map<Integer, DecisionTree> children;
 	private int featureIndex = -1;
+	private Matrix featuresMatrix;
+	private Matrix labelsMatrix;
 	private List<double[]> features;
 	private List<double[]> labels;
-	private int[] featureValueCounts;
-	private int[] labelValueCounts;
 	private int[] skipArray;
 	private int category = -1;
 
 	public void train(Matrix features, Matrix labels) throws Exception {
+		featuresMatrix = features;
+		labelsMatrix = labels;
 		this.features = features.m_data;
 		this.labels = labels.m_data;
-		featureValueCounts = new int[features.cols()];
-		for (int i = 0; i < featureValueCounts.length; i++)
-			featureValueCounts[i] = features.valueCount(i);
-		labelValueCounts = new int[labels.cols()];
-		for (int i = 0; i < labelValueCounts.length; i++)
-			labelValueCounts[i] = labels.valueCount(i);
 		children = new HashMap<>();
 		skipArray = new int[] {};
 		visit();
-		// System.out.println(this);
+		System.out.println(this);
 	}
 
 	public void visit() {
@@ -41,7 +37,7 @@ public class DecisionTree extends SupervisedLearner {
 		if (isPure)
 			category = (int) labels.get(0)[0];
 		else if (features.get(0).length == skipArray.length) {
-			double[] histo = new double[labelValueCounts[0]];
+			double[] histo = new double[labelsMatrix.valueCount(0)];
 			for (int i = 0; i < labels.size(); i++) {
 				histo[(int) labels.get(i)[0]]++;
 			}
@@ -56,7 +52,7 @@ public class DecisionTree extends SupervisedLearner {
 			category = maxIndex;
 		} else {
 			chooseFeature();
-			for (int i = 0; i < featureValueCounts[featureIndex]; i++) {
+			for (int i = 0; i < featuresMatrix.valueCount(featureIndex); i++) {
 				addChild(i);
 			}
 
@@ -74,8 +70,8 @@ public class DecisionTree extends SupervisedLearner {
 		DecisionTree child = new DecisionTree();
 		child.features = new ArrayList<>();
 		child.labels = new ArrayList<>();
-		child.featureValueCounts = featureValueCounts;
-		child.labelValueCounts = labelValueCounts;
+		child.featuresMatrix = featuresMatrix;
+		child.labelsMatrix = labelsMatrix;
 		child.children = new HashMap<>();
 		child.skipArray = new int[skipArray.length + 1];
 		for (int i = 0; i < skipArray.length; i++)
@@ -116,9 +112,9 @@ public class DecisionTree extends SupervisedLearner {
 	}
 
 	private double info(int feature_idx) {
-		double[] histo = new double[labelValueCounts[0]];
+		double[] histo = new double[labelsMatrix.valueCount(0)];
 		double score = 0;
-		for (int k = 0; k < featureValueCounts[feature_idx]; k++) {
+		for (int k = 0; k < featuresMatrix.valueCount(feature_idx); k++) {
 			double total = 0;
 			for (int j = 0; j < histo.length; j++)
 				histo[j] = 0;
@@ -160,21 +156,22 @@ public class DecisionTree extends SupervisedLearner {
 		String tabs = "";
 		for (int i = 0; i < level; i++)
 			tabs = tabs + "\t";
-		sb.append(tabs + "featureIndex=" + featureIndex);
+		if (featureIndex >= 0)
+			sb.append(tabs + "featureIndex=" + featureIndex + " ("
+					+ featuresMatrix.attrName(featureIndex) + ")");
 		sb.append("\n" + tabs + "features="
 				+ Arrays.deepToString(features.toArray()));
 		sb.append("\n" + tabs + "labels="
 				+ Arrays.deepToString(labels.toArray()));
-		sb.append("\n" + tabs + "featureValueCounts="
-				+ Arrays.toString(featureValueCounts));
-		sb.append("\n" + tabs + "labelValueCounts="
-				+ Arrays.toString(labelValueCounts));
 		sb.append("\n" + tabs + "skipArray=" + Arrays.toString(skipArray));
-		sb.append("\n" + tabs + "category=" + category);
+		if (category >= 0)
+			sb.append("\n" + tabs + "category=" + category + " ("
+					+ labelsMatrix.attrValue(0, category) + ")");
 
 		for (int i : children.keySet()) {
 			sb.append("\n" + tabs + "{\n");
-			sb.append(tabs + "\tChild (value " + i + "):\n");
+			sb.append(tabs + "\tChild " + i + " ("
+					+ featuresMatrix.attrValue(featureIndex, i) + "):");
 			sb.append(children.get(i).toString(level + 1));
 			sb.append("\n" + tabs + "}");
 		}
