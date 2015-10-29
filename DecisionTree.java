@@ -118,8 +118,27 @@ public class DecisionTree extends SupervisedLearner {
 		for (int i = 0; i < skipArray.length; i++)
 			child.skipArray[i] = skipArray[i];
 		child.skipArray[child.skipArray.length - 1] = featureIndex;
+
+		double[] histo = new double[featuresMatrix.valueCount(featureIndex)];
+		for (int i = 0; i < features.size(); i++) {
+			if (features.get(i)[featureIndex] < Matrix.MISSING)
+				histo[(int) features.get(i)[featureIndex]]++;
+		}
+		double max = 0;
+		int maxIndex = -1;
+		for (int i = 0; i < histo.length; i++) {
+			if (histo[i] > max) {
+				max = histo[i];
+				maxIndex = i;
+			}
+		}
+
 		for (int i = 0; i < features.size(); i++) {
 			if (features.get(i)[featureIndex] == value) {
+				child.features.add(features.get(i));
+				child.labels.add(labels.get(i));
+			} else if (features.get(i)[featureIndex] == Matrix.MISSING
+					&& value == maxIndex) {
 				child.features.add(features.get(i));
 				child.labels.add(labels.get(i));
 			}
