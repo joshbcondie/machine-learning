@@ -6,7 +6,6 @@ import java.util.Map;
 
 public class DecisionTree extends SupervisedLearner {
 
-	private DecisionTree parent;
 	private Map<Integer, DecisionTree> children;
 	private int featureIndex = -1;
 	private Matrix featuresMatrix;
@@ -24,7 +23,7 @@ public class DecisionTree extends SupervisedLearner {
 		children = new HashMap<>();
 		skipArray = new int[] {};
 		visit();
-		System.out.println(this);
+		// System.out.println(this);
 	}
 
 	public void visit() {
@@ -63,7 +62,31 @@ public class DecisionTree extends SupervisedLearner {
 	}
 
 	public void predict(double[] features, double[] labels) throws Exception {
+		if (category >= 0) {
+			labels[0] = category;
+			return;
+		} else {
+			DecisionTree child = children.get((int) features[featureIndex]);
+			if (child != null) {
+				child.predict(features, labels);
+				return;
+			}
 
+			double[] histo = new double[labelsMatrix.valueCount(0)];
+			for (int i = 0; i < this.labels.size(); i++) {
+				histo[(int) this.labels.get(i)[0]]++;
+			}
+			double max = 0;
+			int maxIndex = -1;
+			for (int i = 0; i < histo.length; i++) {
+				if (histo[i] > max) {
+					max = histo[i];
+					maxIndex = i;
+				}
+			}
+
+			labels[0] = maxIndex;
+		}
 	}
 
 	public void addChild(int value) {
@@ -83,7 +106,6 @@ public class DecisionTree extends SupervisedLearner {
 				child.labels.add(labels.get(i));
 			}
 		}
-		child.parent = this;
 
 		if (child.features.size() > 0)
 			children.put(value, child);
