@@ -3,9 +3,14 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.Stack;
 
 public class DecisionTree extends SupervisedLearner {
 
+	private final static double validationSetSize = 0.25;
+	private Random random;
+	private double accuracy;
 	private Map<Integer, DecisionTree> children;
 	private int featureIndex = -1;
 	private Matrix featuresMatrix;
@@ -15,15 +20,81 @@ public class DecisionTree extends SupervisedLearner {
 	private int[] skipArray;
 	private int category = -1;
 
+	public DecisionTree(Random random) {
+		this.random = random;
+	}
+
 	public void train(Matrix features, Matrix labels) throws Exception {
-		featuresMatrix = features;
-		labelsMatrix = labels;
-		this.features = features.m_data;
-		this.labels = labels.m_data;
+		features.shuffle(random, labels);
+		int validationSetNumber = (int) (validationSetSize * features.rows());
+		Matrix validationFeatures = new Matrix(features, 0, 0,
+				validationSetNumber, features.cols());
+		Matrix trainingFeatures = new Matrix(features, validationSetNumber, 0,
+				features.rows() - validationSetNumber, features.cols());
+		Matrix validationLabels = new Matrix(labels, 0, 0, validationSetNumber,
+				labels.cols());
+		Matrix trainingLabels = new Matrix(labels, validationSetNumber, 0,
+				labels.rows() - validationSetNumber, labels.cols());
+
+		featuresMatrix = trainingFeatures;
+		labelsMatrix = trainingLabels;
+		this.features = trainingFeatures.m_data;
+		this.labels = trainingLabels.m_data;
 		children = new HashMap<>();
 		skipArray = new int[] {};
 		visit();
 		// System.out.println(this);
+	}
+
+	public double getAccuracy(Matrix features, Matrix labels) throws Exception {
+		double accuracy = 0;
+		double[] predictions = new double[labels.cols()];
+
+		for (int i = 0; i < features.rows(); i++) {
+			predict(features.row(i), predictions);
+			if (predictions[0] == labels.get(i, 0))
+				accuracy++;
+		}
+		accuracy /= features.rows();
+
+		return accuracy;
+	}
+
+	public void prune(double accuracy, Matrix validationFeatures,
+			Matrix validationLabels) throws Exception {
+		Stack<DecisionTree> stack = new Stack<>();
+		stack.push(this);
+		while (!stack.isEmpty()) {
+			DecisionTree node = stack.pop();
+			if (node.category >= 0)
+				continue;
+			Map<Integer, DecisionTree> childrenTmp = node.children;
+			node.children = new HashMap<>();
+			double[] histo = new double[node.labelsMatrix.valueCount(0)];
+			for (int i = 0; i < node.labels.size(); i++) {
+				histo[(int) node.labels.get(i)[0]]++;
+			}
+			double max = 0;
+			int maxIndex = -1;
+			for (int i = 0; i < histo.length; i++) {
+				if (histo[i] > max) {
+					max = histo[i];
+					maxIndex = i;
+				}
+			}
+			node.category = maxIndex;
+			double newAccuracy = getAccuracy(validationFeatures,
+					validationLabels);
+			if (newAccuracy >= accuracy)
+				accuracy = newAccuracy;
+			else {
+				node.category = -1;
+				node.children = childrenTmp;
+			}
+
+			for (int i : node.children.keySet())
+				stack.push(node.children.get(i));
+		}
 	}
 
 	public void visit() {
@@ -108,7 +179,7 @@ public class DecisionTree extends SupervisedLearner {
 	}
 
 	public void addChild(int value) {
-		DecisionTree child = new DecisionTree();
+		DecisionTree child = new DecisionTree(random);
 		child.features = new ArrayList<>();
 		child.labels = new ArrayList<>();
 		child.featuresMatrix = featuresMatrix;
