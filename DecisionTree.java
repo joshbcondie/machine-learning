@@ -214,7 +214,7 @@ public class DecisionTree extends SupervisedLearner {
 	}
 
 	public int getDepth() {
-		return getDepth(1);
+		return getDepth(0);
 	}
 
 	public int getDepth(int level) {
