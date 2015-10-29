@@ -157,7 +157,7 @@ public class DecisionTree extends SupervisedLearner {
 		for (int i = 0; i < level; i++)
 			tabs = tabs + "\t";
 		if (featureIndex >= 0)
-			sb.append(tabs + "featureIndex=" + featureIndex + " ("
+			sb.append("\n" + tabs + "featureIndex=" + featureIndex + " ("
 					+ featuresMatrix.attrName(featureIndex) + ")");
 		sb.append("\n" + tabs + "features="
 				+ Arrays.deepToString(features.toArray()));
