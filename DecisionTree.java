@@ -62,31 +62,49 @@ public class DecisionTree extends SupervisedLearner {
 	}
 
 	public void predict(double[] features, double[] labels) throws Exception {
+		double[] probabilities = getCategoryProbabilities(features, labels);
+		double max = 0;
+		double maxIndex = -1;
+		for (int i = 0; i < probabilities.length; i++) {
+			if (probabilities[i] > max) {
+				max = probabilities[i];
+				maxIndex = i;
+			}
+		}
+
+		labels[0] = maxIndex;
+	}
+
+	public double[] getCategoryProbabilities(double[] features, double[] labels) {
+		double[] probabilities = new double[labelsMatrix.valueCount(0)];
 		if (category >= 0) {
-			labels[0] = category;
-			return;
+			probabilities[category] = 1;
 		} else {
 			DecisionTree child = children.get((int) features[featureIndex]);
 			if (child != null) {
-				child.predict(features, labels);
-				return;
-			}
+				probabilities = child
+						.getCategoryProbabilities(features, labels);
+			} else {
 
-			double[] histo = new double[labelsMatrix.valueCount(0)];
-			for (int i = 0; i < this.labels.size(); i++) {
-				histo[(int) this.labels.get(i)[0]]++;
-			}
-			double max = 0;
-			int maxIndex = -1;
-			for (int i = 0; i < histo.length; i++) {
-				if (histo[i] > max) {
-					max = histo[i];
-					maxIndex = i;
+				int missingValues = 0;
+				for (int i = 0; i < this.features.size(); i++) {
+					if (this.features.get(i)[featureIndex] == Matrix.MISSING)
+						missingValues++;
+				}
+
+				double[] childProbabilities = null;
+				for (Integer i : children.keySet()) {
+					childProbabilities = children.get(i)
+							.getCategoryProbabilities(features, labels);
+					for (int j = 0; j < childProbabilities.length; j++)
+						probabilities[j] += childProbabilities[j]
+								* children.get(i).features.size()
+								/ (this.features.size() - missingValues);
 				}
 			}
-
-			labels[0] = maxIndex;
 		}
+
+		return probabilities;
 	}
 
 	public void addChild(int value) {
