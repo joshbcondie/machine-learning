@@ -9,6 +9,7 @@ import java.util.Stack;
 public class DecisionTree extends SupervisedLearner {
 
 	private final static double validationSetSize = 0.25;
+	private final static boolean prune = false;
 	private Random random;
 	private double accuracy;
 	private Map<Integer, DecisionTree> children;
@@ -25,32 +26,46 @@ public class DecisionTree extends SupervisedLearner {
 	}
 
 	public void train(Matrix features, Matrix labels) throws Exception {
-		features.shuffle(random, labels);
-		int validationSetNumber = (int) (validationSetSize * features.rows());
-		Matrix validationFeatures = new Matrix(features, 0, 0,
-				validationSetNumber, features.cols());
-		Matrix trainingFeatures = new Matrix(features, validationSetNumber, 0,
-				features.rows() - validationSetNumber, features.cols());
-		Matrix validationLabels = new Matrix(labels, 0, 0, validationSetNumber,
-				labels.cols());
-		Matrix trainingLabels = new Matrix(labels, validationSetNumber, 0,
-				labels.rows() - validationSetNumber, labels.cols());
+		Matrix validationFeatures = null;
+		Matrix trainingFeatures = null;
+		Matrix validationLabels = null;
+		Matrix trainingLabels = null;
+		if (prune) {
+			features.shuffle(random, labels);
+			int validationSetNumber = (int) (validationSetSize * features
+					.rows());
+			validationFeatures = new Matrix(features, 0, 0,
+					validationSetNumber, features.cols());
+			trainingFeatures = new Matrix(features, validationSetNumber, 0,
+					features.rows() - validationSetNumber, features.cols());
+			validationLabels = new Matrix(labels, 0, 0, validationSetNumber,
+					labels.cols());
+			trainingLabels = new Matrix(labels, validationSetNumber, 0,
+					labels.rows() - validationSetNumber, labels.cols());
 
-		featuresMatrix = trainingFeatures;
-		labelsMatrix = trainingLabels;
-		this.features = trainingFeatures.m_data;
-		this.labels = trainingLabels.m_data;
+			featuresMatrix = trainingFeatures;
+			labelsMatrix = trainingLabels;
+			this.features = trainingFeatures.m_data;
+			this.labels = trainingLabels.m_data;
+		} else {
+			featuresMatrix = features;
+			labelsMatrix = labels;
+			this.features = features.m_data;
+			this.labels = labels.m_data;
+		}
 		children = new HashMap<>();
 		skipArray = new int[] {};
 		visit();
-		// System.out.println(this);
-		// System.out.println(getDepth());
-		accuracy = getAccuracy(validationFeatures, validationLabels);
-		// System.out.println("Accuracy: " + accuracy);
-		prune(accuracy, validationFeatures, validationLabels);
-		System.out.println(getNodeCount());
-		System.out.println(this);
-		// System.out.println("Accuracy: " + accuracy);
+		if (prune) {
+			// System.out.println(this);
+			// System.out.println(getDepth());
+			accuracy = getAccuracy(validationFeatures, validationLabels);
+			// System.out.println("Accuracy: " + accuracy);
+			prune(accuracy, validationFeatures, validationLabels);
+			System.out.println(getNodeCount());
+			System.out.println(this);
+			// System.out.println("Accuracy: " + accuracy);
+		}
 	}
 
 	public double getAccuracy(Matrix features, Matrix labels) throws Exception {
