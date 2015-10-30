@@ -9,6 +9,7 @@ import java.util.Stack;
 public class DecisionTree extends SupervisedLearner {
 
 	private final static double validationSetSize = 0.25;
+	private final static double purityThreshold = 1;
 	private final static boolean prune = false;
 	private Random random;
 	private double accuracy;
@@ -121,28 +122,22 @@ public class DecisionTree extends SupervisedLearner {
 
 	public void visit() {
 
-		boolean isPure = true;
+		double[] histo = new double[labelsMatrix.valueCount(0)];
 		for (int i = 0; i < labels.size(); i++) {
-			if (labels.get(i)[0] != labels.get(0)[0])
-				isPure = false;
+			histo[(int) labels.get(i)[0]]++;
 		}
-		if (isPure)
-			category = (int) labels.get(0)[0];
-		else if (features.get(0).length == skipArray.length) {
-			double[] histo = new double[labelsMatrix.valueCount(0)];
-			for (int i = 0; i < labels.size(); i++) {
-				histo[(int) labels.get(i)[0]]++;
+		double max = 0;
+		int maxIndex = -1;
+		for (int i = 0; i < histo.length; i++) {
+			if (histo[i] > max) {
+				max = histo[i];
+				maxIndex = i;
 			}
-			double max = 0;
-			int maxIndex = -1;
-			for (int i = 0; i < histo.length; i++) {
-				if (histo[i] > max) {
-					max = histo[i];
-					maxIndex = i;
-				}
-			}
+		}
+		if (max / labels.size() >= purityThreshold
+				|| features.get(0).length == skipArray.length)
 			category = maxIndex;
-		} else {
+		else {
 			chooseFeature();
 			for (int i = 0; i < featuresMatrix.valueCount(featureIndex); i++) {
 				addChild(i);
