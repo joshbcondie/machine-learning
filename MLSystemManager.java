@@ -28,7 +28,7 @@ public class MLSystemManager {
 
 		//args = new String[]{"-L", "baseline", "-A", "data/iris.arff", "-E", "cross", "10", "-N"};
 
-		Random rand = new Random(seed); // Use a seed for deterministic results (makes debugging easier)
+		Random rand = new Random(133133819/*seed*/); // Use a seed for deterministic results (makes debugging easier)
 //		Random rand = new Random(); // No seed for non-deterministic results
 
 		//Parse the command line arguments
@@ -145,6 +145,7 @@ public class MLSystemManager {
 				throw new Exception("Number of folds must be greater than 0");
 			System.out.println("Number of folds: " + folds);
 			int reps = 1;
+			double sumTrainAccuracy = 0.0;
 			double sumAccuracy = 0.0;
 			double elapsedTime = 0.0;
 			for(int j = 0; j < reps; j++) {
@@ -161,9 +162,12 @@ public class MLSystemManager {
 					double startTime = System.currentTimeMillis();
 					learner.train(trainFeatures, trainLabels);
 					elapsedTime += System.currentTimeMillis() - startTime;
+					double trainAccuracy = learner.measureAccuracy(trainFeatures, trainLabels, null);
 					double accuracy = learner.measureAccuracy(testFeatures, testLabels, null);
+					sumTrainAccuracy += trainAccuracy;
 					sumAccuracy += accuracy;
-					System.out.println("Rep=" + j + ", Fold=" + i + ", Accuracy=" + accuracy);
+//					System.out.println("Rep=" + j + ", Fold=" + i + ", Training accuracy= " + trainAccuracy + ", Accuracy=" + accuracy);
+//					System.out.println(accuracy);
 				}
 			}
 			elapsedTime /= (reps * folds);

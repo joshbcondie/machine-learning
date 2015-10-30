@@ -44,6 +44,13 @@ public class DecisionTree extends SupervisedLearner {
 		skipArray = new int[] {};
 		visit();
 		// System.out.println(this);
+		// System.out.println(getDepth());
+		accuracy = getAccuracy(validationFeatures, validationLabels);
+		// System.out.println("Accuracy: " + accuracy);
+		prune(accuracy, validationFeatures, validationLabels);
+		System.out.println(getNodeCount());
+		System.out.println(this);
+		// System.out.println("Accuracy: " + accuracy);
 	}
 
 	public double getAccuracy(Matrix features, Matrix labels) throws Exception {
