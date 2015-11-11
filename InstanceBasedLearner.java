@@ -7,10 +7,15 @@ public class InstanceBasedLearner extends SupervisedLearner {
 	private double[] minimums;
 	private double[] maximums;
 
-	private double[] normalize(double[] values) {
+	private double[] normalize(double[] values, Matrix features) {
 		double[] result = new double[values.length];
-		for (int i = 0; i < values.length; i++)
-			result[i] = (values[i] - minimums[i]) / (maximums[i] - minimums[i]);
+		for (int i = 0; i < values.length; i++) {
+			if (features.valueCount(i) == 0)
+				result[i] = (values[i] - minimums[i])
+						/ (maximums[i] - minimums[i]);
+			else
+				result[i] = values[i];
+		}
 		return result;
 	}
 
@@ -33,14 +38,15 @@ public class InstanceBasedLearner extends SupervisedLearner {
 
 		for (int i = 0; i < m_features.rows(); i++)
 			for (int j = 0; j < m_features.cols(); j++)
-				m_features.set(i, j, (features.get(i, j) - minimums[j])
-						/ (maximums[j] - minimums[j]));
+				if (m_features.valueCount(j) == 0)
+					m_features.set(i, j, (features.get(i, j) - minimums[j])
+							/ (maximums[j] - minimums[j]));
 	}
 
 	@Override
 	public void predict(double[] features, double[] labels) throws Exception {
 
-		double[] normalizedFeatures = normalize(features);
+		double[] normalizedFeatures = normalize(features, m_features);
 
 		double[] distances = new double[m_features.rows()];
 		double[] topDistances = new double[neighborCount];
