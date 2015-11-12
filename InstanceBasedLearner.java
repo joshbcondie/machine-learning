@@ -79,17 +79,34 @@ public class InstanceBasedLearner extends SupervisedLearner {
 			}
 		}
 
-		if (m_labels.valueCount(0) == 0) {
+		if (weightDistances && topDistances[0] == 0)
+			labels[0] = m_labels.row(topInstances[0])[0];
+		else if (m_labels.valueCount(0) == 0) {
 			double sum = 0;
-			for (int i = 0; i < topInstances.length; i++)
-				sum += m_labels.row(topInstances[i])[0];
-			labels[0] = sum / topInstances.length;
+			for (int i = 0; i < topInstances.length; i++) {
+				if (weightDistances)
+					sum += m_labels.row(topInstances[i])[0]
+							/ (topDistances[i] * topDistances[i]);
+				else
+					sum += m_labels.row(topInstances[i])[0];
+			}
+			if (weightDistances) {
+				double normalizer = 0;
+				for (int i = 0; i < topDistances.length; i++)
+					normalizer += 1 / (topDistances[i] * topDistances[i]);
+				labels[0] = sum / normalizer;
+			} else
+				labels[0] = sum / topInstances.length;
 		} else {
-			int[] histogram = new int[m_labels.valueCount(0)];
-			for (int i = 0; i < topInstances.length; i++)
-				histogram[(int) m_labels.row(topInstances[i])[0]]++;
+			double[] histogram = new double[m_labels.valueCount(0)];
+			for (int i = 0; i < topInstances.length; i++) {
+				if (weightDistances)
+					histogram[(int) m_labels.row(topInstances[i])[0]] += 1 / (topDistances[i] * topDistances[i]);
+				else
+					histogram[(int) m_labels.row(topInstances[i])[0]]++;
+			}
 
-			int max = 0;
+			double max = 0;
 			int maxIndex = -1;
 			for (int i = 0; i < histogram.length; i++) {
 				if (histogram[i] > max) {
