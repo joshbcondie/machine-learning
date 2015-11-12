@@ -10,7 +10,7 @@ public class InstanceBasedLearner extends SupervisedLearner {
 	private double[] normalize(double[] values, Matrix features) {
 		double[] result = new double[values.length];
 		for (int i = 0; i < values.length; i++) {
-			if (features.valueCount(i) == 0)
+			if (features.valueCount(i) == 0 && values[i] != Matrix.MISSING)
 				result[i] = (values[i] - minimums[i])
 						/ (maximums[i] - minimums[i]);
 			else
@@ -29,16 +29,19 @@ public class InstanceBasedLearner extends SupervisedLearner {
 
 		for (int i = 0; i < features.rows(); i++) {
 			for (int j = 0; j < features.cols(); j++) {
-				if (features.row(i)[j] < minimums[j])
+				if (features.get(i,j) == Matrix.MISSING)
+					continue;
+				if (features.get(i,j) < minimums[j])
 					minimums[j] = features.row(i)[j];
-				if (features.row(i)[j] > maximums[j])
+				if (features.get(i,j) > maximums[j])
 					maximums[j] = features.row(i)[j];
 			}
 		}
 
 		for (int i = 0; i < m_features.rows(); i++)
 			for (int j = 0; j < m_features.cols(); j++)
-				if (m_features.valueCount(j) == 0)
+				if (m_features.valueCount(j) == 0
+						&& features.get(i, j) != Matrix.MISSING)
 					m_features.set(i, j, (features.get(i, j) - minimums[j])
 							/ (maximums[j] - minimums[j]));
 	}
@@ -58,7 +61,10 @@ public class InstanceBasedLearner extends SupervisedLearner {
 
 		for (int i = 0; i < distances.length; i++) {
 			for (int j = 0; j < normalizedFeatures.length; j++) {
-				if (m_features.valueCount(j) == 0)
+				if (m_features.get(i, j) == Matrix.MISSING
+						|| normalizedFeatures[j] == Matrix.MISSING)
+					distances[i]++;
+				else if (m_features.valueCount(j) == 0)
 					distances[i] += (m_features.get(i, j) - normalizedFeatures[j])
 							* (m_features.get(i, j) - normalizedFeatures[j]);
 				else if (m_features.get(i, j) != normalizedFeatures[j])
