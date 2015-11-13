@@ -29,11 +29,11 @@ public class InstanceBasedLearner extends SupervisedLearner {
 
 		for (int i = 0; i < features.rows(); i++) {
 			for (int j = 0; j < features.cols(); j++) {
-				if (features.get(i,j) == Matrix.MISSING)
+				if (features.get(i, j) == Matrix.MISSING)
 					continue;
-				if (features.get(i,j) < minimums[j])
+				if (features.get(i, j) < minimums[j])
 					minimums[j] = features.row(i)[j];
-				if (features.get(i,j) > maximums[j])
+				if (features.get(i, j) > maximums[j])
 					maximums[j] = features.row(i)[j];
 			}
 		}
@@ -51,55 +51,55 @@ public class InstanceBasedLearner extends SupervisedLearner {
 
 		double[] normalizedFeatures = normalize(features, m_features);
 
-		double[] distances = new double[m_features.rows()];
-		double[] topDistances = new double[neighborCount];
-		for (int i = 0; i < topDistances.length; i++)
-			topDistances[i] = Double.MAX_VALUE;
+		double[] squaredDistances = new double[m_features.rows()];
+		double[] topSquaredDistances = new double[neighborCount];
+		for (int i = 0; i < topSquaredDistances.length; i++)
+			topSquaredDistances[i] = Double.MAX_VALUE;
 		int[] topInstances = new int[neighborCount];
 		for (int i = 0; i < topInstances.length; i++)
 			topInstances[i] = -1;
 
-		for (int i = 0; i < distances.length; i++) {
+		for (int i = 0; i < squaredDistances.length; i++) {
 			for (int j = 0; j < normalizedFeatures.length; j++) {
 				if (m_features.get(i, j) == Matrix.MISSING
 						|| normalizedFeatures[j] == Matrix.MISSING)
-					distances[i]++;
+					squaredDistances[i]++;
 				else if (m_features.valueCount(j) == 0)
-					distances[i] += (m_features.get(i, j) - normalizedFeatures[j])
+					squaredDistances[i] += (m_features.get(i, j) - normalizedFeatures[j])
 							* (m_features.get(i, j) - normalizedFeatures[j]);
 				else if (m_features.get(i, j) != normalizedFeatures[j])
-					distances[i]++;
+					squaredDistances[i]++;
 			}
 
 			for (int j = 0; j < neighborCount; j++) {
-				if (distances[i] < topDistances[j]) {
+				if (squaredDistances[i] < topSquaredDistances[j]) {
 					for (int k = neighborCount - 1; k > i; k--) {
-						topDistances[k] = topDistances[k - 1];
+						topSquaredDistances[k] = topSquaredDistances[k - 1];
 						topInstances[k] = topInstances[k - 1];
 					}
 
-					topDistances[j] = distances[i];
+					topSquaredDistances[j] = squaredDistances[i];
 					topInstances[j] = i;
 					break;
 				}
 			}
 		}
 
-		if (weightDistances && topDistances[0] == 0)
+		if (weightDistances && topSquaredDistances[0] == 0)
 			labels[0] = m_labels.row(topInstances[0])[0];
 		else if (m_labels.valueCount(0) == 0) {
 			double sum = 0;
 			for (int i = 0; i < topInstances.length; i++) {
 				if (weightDistances)
 					sum += m_labels.row(topInstances[i])[0]
-							/ (topDistances[i] * topDistances[i]);
+							/ topSquaredDistances[i];
 				else
 					sum += m_labels.row(topInstances[i])[0];
 			}
 			if (weightDistances) {
 				double normalizer = 0;
-				for (int i = 0; i < topDistances.length; i++)
-					normalizer += 1 / (topDistances[i] * topDistances[i]);
+				for (int i = 0; i < topSquaredDistances.length; i++)
+					normalizer += 1 / topSquaredDistances[i];
 				labels[0] = sum / normalizer;
 			} else
 				labels[0] = sum / topInstances.length;
@@ -107,7 +107,7 @@ public class InstanceBasedLearner extends SupervisedLearner {
 			double[] histogram = new double[m_labels.valueCount(0)];
 			for (int i = 0; i < topInstances.length; i++) {
 				if (weightDistances)
-					histogram[(int) m_labels.row(topInstances[i])[0]] += 1 / (topDistances[i] * topDistances[i]);
+					histogram[(int) m_labels.row(topInstances[i])[0]] += 1 / topSquaredDistances[i];
 				else
 					histogram[(int) m_labels.row(topInstances[i])[0]]++;
 			}
