@@ -1,7 +1,8 @@
 public class InstanceBasedLearner extends SupervisedLearner {
 
 	private int neighborCount = 1;
-	private boolean weightDistances = false;
+	private boolean normalizeFeatures = true;
+	private boolean weightDistances = true;
 	private Matrix m_features;
 	private Matrix m_labels;
 	private double[] minimums;
@@ -56,12 +57,14 @@ public class InstanceBasedLearner extends SupervisedLearner {
 			}
 		}
 
-		for (int i = 0; i < m_features.rows(); i++)
-			for (int j = 0; j < m_features.cols(); j++)
-				if (m_features.valueCount(j) == 0
-						&& features.get(i, j) != Matrix.MISSING)
-					m_features.set(i, j, (features.get(i, j) - minimums[j])
-							/ (maximums[j] - minimums[j]));
+		if (normalizeFeatures) {
+			for (int i = 0; i < m_features.rows(); i++)
+				for (int j = 0; j < m_features.cols(); j++)
+					if (m_features.valueCount(j) == 0
+							&& features.get(i, j) != Matrix.MISSING)
+						m_features.set(i, j, (features.get(i, j) - minimums[j])
+								/ (maximums[j] - minimums[j]));
+		}
 
 		if (useHVDM) {
 			for (int i = 0; i < probabilities.length; i++) {
@@ -84,7 +87,11 @@ public class InstanceBasedLearner extends SupervisedLearner {
 	@Override
 	public void predict(double[] features, double[] labels) throws Exception {
 
-		double[] normalizedFeatures = normalize(features, m_features);
+		double[] normalizedFeatures = null;
+		if (normalizeFeatures)
+			normalizedFeatures = normalize(features, m_features);
+		else
+			normalizedFeatures = features;
 
 		double[] squaredDistances = new double[m_features.rows()];
 		double[] topSquaredDistances = new double[neighborCount];
