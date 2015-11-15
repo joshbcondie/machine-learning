@@ -6,6 +6,8 @@ public class InstanceBasedLearner extends SupervisedLearner {
 	private Matrix m_labels;
 	private double[] minimums;
 	private double[] maximums;
+	private boolean useHVDM = true;
+	private double[][][] probabilities;
 
 	private double[] normalize(double[] values, Matrix features) {
 		double[] result = new double[values.length];
@@ -26,6 +28,16 @@ public class InstanceBasedLearner extends SupervisedLearner {
 		m_labels = new Matrix(labels, 0, 0, labels.rows(), labels.cols());
 		minimums = new double[features.cols()];
 		maximums = new double[features.cols()];
+		if (m_labels.valueCount(0) == 0)
+			useHVDM = false;
+		if (useHVDM) {
+			probabilities = new double[features.cols()][][];
+			for (int i = 0; i < features.cols(); i++) {
+				probabilities[i] = new double[m_features.valueCount(i)][];
+				for (int j = 0; j < m_features.valueCount(i); j++)
+					probabilities[i][j] = new double[m_labels.valueCount(0)];
+			}
+		}
 
 		for (int i = 0; i < features.rows(); i++) {
 			for (int j = 0; j < features.cols(); j++) {
@@ -35,6 +47,12 @@ public class InstanceBasedLearner extends SupervisedLearner {
 					minimums[j] = features.row(i)[j];
 				if (features.get(i, j) > maximums[j])
 					maximums[j] = features.row(i)[j];
+				if (useHVDM) {
+					if (m_features.valueCount(j) > 0) {
+						probabilities[j][(int) features.get(i, j)][(int) labels
+								.get(i, 0)]++;
+					}
+				}
 			}
 		}
 
@@ -44,6 +62,23 @@ public class InstanceBasedLearner extends SupervisedLearner {
 						&& features.get(i, j) != Matrix.MISSING)
 					m_features.set(i, j, (features.get(i, j) - minimums[j])
 							/ (maximums[j] - minimums[j]));
+
+		if (useHVDM) {
+			for (int i = 0; i < probabilities.length; i++) {
+				for (int j = 0; j < probabilities[i].length; j++) {
+					int sum = 0;
+					for (int k = 0; k < probabilities[i][j].length; k++)
+						sum += probabilities[i][j][k];
+					for (int k = 0; k < probabilities[i][j].length; k++) {
+						if (sum == 0)
+							probabilities[i][j][k] = 1.0 / m_labels
+									.valueCount(0);
+						else
+							probabilities[i][j][k] /= sum;
+					}
+				}
+			}
+		}
 	}
 
 	@Override
@@ -67,8 +102,17 @@ public class InstanceBasedLearner extends SupervisedLearner {
 				else if (m_features.valueCount(j) == 0)
 					squaredDistances[i] += (m_features.get(i, j) - normalizedFeatures[j])
 							* (m_features.get(i, j) - normalizedFeatures[j]);
-				else if (m_features.get(i, j) != normalizedFeatures[j])
-					squaredDistances[i]++;
+				else {
+					if (useHVDM) {
+						for (int k = 0; k < m_labels.valueCount(0); k++) {
+							squaredDistances[i] += (probabilities[j][(int) m_features
+									.get(i, j)][k] - probabilities[j][(int) normalizedFeatures[j]][k])
+									* (probabilities[j][(int) m_features.get(i,
+											j)][k] - probabilities[j][(int) normalizedFeatures[j]][k]);
+						}
+					} else if (m_features.get(i, j) != normalizedFeatures[j])
+						squaredDistances[i]++;
+				}
 			}
 
 			for (int j = 0; j < neighborCount; j++) {
