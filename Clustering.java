@@ -1,21 +1,32 @@
 import java.io.FileNotFoundException;
+import java.util.Random;
 
 public class Clustering {
 
 	private static final boolean normalize = false;
-	private static final String fileName = "laborWithID.arff";
-	private static final int k = 5;
+	private static final boolean shuffle = false;
+	private static final boolean randomSeed = false;
+	private static long seed = 555;
+	private static final String fileName = "sponge.arff";
+	private static final int k = 4;
 	private static Matrix data;
 
 	public static void main(String[] args) throws FileNotFoundException,
 			Exception {
 		data = new Matrix();
 		data.loadArff(fileName);
-		// TODO: Remove following line; only use for laborWithID.arff
-		data = new Matrix(data, 0, 1, data.rows(), data.cols() - 2);
 		if (normalize) {
 			System.out.println("Using normalized data\n");
 			data.normalize();
+		}
+
+		if (shuffle) {
+			if (randomSeed) {
+				Random random = new Random();
+				seed = random.nextLong();
+			}
+			System.out.println("Random seed: " + seed);
+			data.shuffle(new Random(seed));
 		}
 
 		double[][] centroids = new double[k][];
