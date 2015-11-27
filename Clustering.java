@@ -11,6 +11,7 @@ public class Clustering {
 			Exception {
 		data = new Matrix();
 		data.loadArff(fileName);
+		// TODO: Remove following line; only use for laborWithID.arff
 		data = new Matrix(data, 0, 1, data.rows(), data.cols() - 2);
 		if (normalize) {
 			System.out.println("Using normalized data\n");
