@@ -100,7 +100,7 @@ public class Clustering {
 					if (centroids[i][c] == Matrix.MISSING)
 						System.out.print("?");
 					else if (data.valueCount(c) == 0)
-						System.out.printf("%.3f", centroids[i][c]);
+						System.out.print(centroids[i][c]);
 					else
 						System.out.print(data.attrValue(c,
 								(int) centroids[i][c]));
@@ -112,6 +112,8 @@ public class Clustering {
 
 			System.out.println("Making Assignments");
 			double sse = 0;
+			int[] numInstances = new int[k];
+			double[] sses = new double[k];
 
 			for (int r = 0; r < data.rows(); r++) {
 				double minSquaredDistance = Double.MAX_VALUE;
@@ -125,6 +127,8 @@ public class Clustering {
 					}
 				}
 				clusters[r] = closestK;
+				numInstances[closestK]++;
+				sses[closestK] += minSquaredDistance;
 				sse += minSquaredDistance;
 				if (r % 10 == 0) {
 					if (r > 0)
@@ -133,7 +137,12 @@ public class Clustering {
 				}
 				System.out.print(r + "=" + closestK + " ");
 			}
-			System.out.printf("\nSSE: %.3f\n\n", sse);
+			System.out.println();
+			for (int i = 0; i < k; i++) {
+				System.out.println("Centroid " + i + ": numInstances = "
+						+ numInstances[i] + "; SSE = " + sses[i]);
+			}
+			System.out.print("\nTotal SSE: " + sse + "\n\n");
 
 			iteration++;
 		}
