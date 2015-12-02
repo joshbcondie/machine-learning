@@ -146,6 +146,51 @@ public class Clustering {
 
 			iteration++;
 		}
+
+		int[] nearestClusters = new int[centroids.length];
+		for (int i = 0; i < nearestClusters.length; i++) {
+			int nearestCluster = -1;
+			double minSquaredDistance = Double.MAX_VALUE;
+			for (int j = 0; j < nearestClusters.length; j++) {
+				if (i == j)
+					continue;
+				double squaredDistance = squaredDistance(centroids[i],
+						centroids[j]);
+				if (squaredDistance < minSquaredDistance) {
+					minSquaredDistance = squaredDistance;
+					nearestCluster = j;
+				}
+			}
+			nearestClusters[i] = nearestCluster;
+		}
+
+		double silhouetteCoefficient = 0;
+		for (int i = 0; i < clusters.length; i++) {
+
+			double a = 0;
+			int aCount = 0;
+			double b = 0;
+			int bCount = 0;
+
+			for (int j = 0; j < clusters.length; j++) {
+				if (i == j)
+					continue;
+				if (clusters[i] == clusters[j]) {
+					a += Math.sqrt(squaredDistance(data.row(i), data.row(j)));
+					aCount++;
+				} else if (nearestClusters[clusters[i]] == clusters[j]) {
+					b += Math.sqrt(squaredDistance(data.row(i), data.row(j)));
+					bCount++;
+				}
+			}
+			if (aCount > 0)
+				a /= aCount;
+			if (bCount > 0)
+				b /= bCount;
+			silhouetteCoefficient += (b - a) / Math.max(a, b);
+		}
+		silhouetteCoefficient /= data.rows();
+		System.out.println("Silhouette Coefficient: " + silhouetteCoefficient);
 	}
 
 	private static double squaredDistance(double[] a, double[] b) {
