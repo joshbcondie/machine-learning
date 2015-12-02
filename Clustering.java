@@ -9,6 +9,7 @@ public class Clustering {
 	private static long seed = 555;
 	private static final String fileName = "sponge.arff";
 	private static final int k = 4;
+	private static final boolean useEuclideanDistance = true;
 	private static Matrix data;
 
 	public static void main(String[] args) throws FileNotFoundException,
@@ -119,8 +120,14 @@ public class Clustering {
 				double minSquaredDistance = Double.MAX_VALUE;
 				int closestK = -1;
 				for (int i = 0; i < k; i++) {
-					double squaredDistance = squaredDistance(data.row(r),
-							centroids[i]);
+					double squaredDistance;
+					if (useEuclideanDistance)
+						squaredDistance = squaredDistance(data.row(r),
+								centroids[i]);
+					else
+						squaredDistance = manhattanDistance(data.row(r),
+								centroids[i])
+								* manhattanDistance(data.row(r), centroids[i]);
 					if (squaredDistance < minSquaredDistance) {
 						minSquaredDistance = squaredDistance;
 						closestK = i;
@@ -206,5 +213,20 @@ public class Clustering {
 			}
 		}
 		return squaredDistance;
+	}
+
+	private static double manhattanDistance(double[] a, double[] b) {
+		double distance = 0;
+		for (int c = 0; c < a.length; c++) {
+			if (a[c] == Matrix.MISSING || b[c] == Matrix.MISSING)
+				distance++;
+			else {
+				if (data.valueCount(c) == 0)
+					distance += Math.abs(a[c] - b[c]);
+				else if (a[c] != b[c])
+					distance++;
+			}
+		}
+		return distance;
 	}
 }
